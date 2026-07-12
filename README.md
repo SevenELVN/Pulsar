@@ -1,109 +1,348 @@
-Вот обновлённый `README.md`, в котором английская и русская версии объединены в одном файле, а количество эмодзи сведено к минимуму (оставлены только в заголовке и для лицензии).
+# 🚀 Pulsar
+### Secure P2P Messenger via Public Icecast Servers
+### Защищённый P2P-мессенджер через публичные Icecast-серверы
 
-```markdown
-# Pulsar — Secure P2P Messenger via Public Icecast Servers
-## Pulsar — Защищённый P2P-мессенджер через публичные Icecast-серверы
+<p align="center">
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20ESP32-success)
+![Encryption](https://img.shields.io/badge/Encryption-AES--256--GCM-red)
+![Transport](https://img.shields.io/badge/Transport-Icecast%20%2F%20Shoutcast-orange)
+
+</p>
 
 ---
 
-## English
+# 🇬🇧 English
 
-**Pulsar** provides end-to-end encrypted text messaging using any Icecast/Shoutcast server as a blind relay. Messages are encrypted with AES-256-GCM, Base64-encoded, and embedded into Icecast metadata (the `song` field). Neither server operators nor network eavesdroppers can read the communication. Input is possible from physical Morse keys on an ESP32 with a display, or from an Android CLI / on-screen keyboard.
+## Overview
 
-### Features
-- End-to-end encryption (AES-256-GCM) with a unique key per contact.
-- Decentralised transport via any public Icecast/Shoutcast server.
-- Hardware terminal: ESP32 with buttons for Morse input and an OLED display for contact selection and message reading (Russian Cyrillic supported).
-- Android terminal: CLI interface with optional on-screen Morse buttons.
-- Contact list on ESP32, synchronised with the Android address book.
-- Secure contact discovery: one-time handshake token exchanged in person (QR or manual input).
-- Paranoid mode: server sees only random Base64; each message has a unique IV; GCM authentication prevents forgery.
-- Persistent background service on Android (foreground notification).
+**Pulsar** is an end-to-end encrypted messenger that uses any public **Icecast/Shoutcast** server as a blind relay.
 
-### How it works
+Instead of sending ordinary chat packets, encrypted messages are embedded into the stream metadata (`song` field). Server operators only see random Base64 strings and cannot decrypt or modify the communication.
+
+Messages can be entered using:
+
+- 📱 Android CLI
+- ⌨️ Android on-screen Morse keyboard
+- 📟 ESP32 hardware terminal with physical Morse keys and OLED display
+
+---
+
+## ✨ Features
+
+- 🔐 AES-256-GCM end-to-end encryption
+- 🔑 Unique 256-bit key for every contact
+- 🌐 Works through any public Icecast/Shoutcast server
+- 📟 ESP32 hardware messenger
+- 📱 Android terminal (CLI + optional Morse buttons)
+- 📚 Contact list synchronized with Android
+- 🤝 Secure in-person contact exchange (QR or manual token)
+- 🛡️ Fresh IV for every message
+- ✅ GCM authentication prevents forgery
+- 🔔 Persistent Android background service
+
+---
+
+## 🏗 Architecture
+
+```text
+ESP32
+  │
+  │ Morse buttons
+  ▼
+Decode Morse
+  │
+Select Contact
+  │
+[contact_id:text]
+  │
+Bluetooth
+  ▼
+Android
+  │
+AES-256-GCM
+  │
+Base64
+  │
+HTTP Metadata Update
+  ▼
+Icecast/Shoutcast Server
+  │
+(song metadata)
+  ▼
+Android Receiver
+  │
+Decrypt
+  ▼
+ESP32 Display
 ```
-ESP32: Morse keys → decode → select contact → [contact_id:text] → Bluetooth → Android
-Android: select contact (or use CLI) → encrypt → Base64 → HTTP metadata update → Icecast
-Reception: Android listens to its own mount point → extracts Base64 → decrypts with known keys → displays and forwards to ESP32
+
+---
+
+## 🔒 Security
+
+Every contact pair has its own locally generated **256-bit PSK**.
+
+For every message:
+
+- random 96-bit IV (nonce)
+- AES-256-GCM encryption
+- authentication tag verification
+
+Modified, forged or foreign packets are discarded automatically.
+
+Encryption keys are stored securely using:
+
+- Android Keystore
+- EncryptedSharedPreferences
+
+---
+
+## 🚀 Quick Start
+
+### 1. Prepare Icecast
+
+Create a mount point such as:
+
+```
+/user123.mp3
 ```
 
-### Security highlights
-- Each contact pair uses a unique 256-bit pre-shared key (PSK), generated locally and exchanged only in person.
-- Every message uses a fresh random 96-bit IV (nonce).
-- GCM authentication tag ensures message integrity; modified or foreign messages are discarded.
-- Keys are stored in Android Keystore + EncryptedSharedPreferences.
+Enable metadata updates.
 
-### Quick start
-1. Create a mount point on any Icecast server (e.g. `/user123.mp3`) and enable metadata updates.
-2. Flash the ESP32 firmware from `esp32/` (configure pinout in `config.h`, use Arduino IDE).
-3. Build and install the Android app from `android/` (or install the release APK).
-4. Pair Android with ESP32 via Bluetooth (device name `Pulsar-ESP`).
-5. Add contacts: exchange handshake tokens in person (QR or text).
-6. Start messaging: choose a contact on ESP32 or in CLI, type, send.
+### 2. Flash ESP32
 
-### Repository structure
+Firmware:
+
 ```
+esp32/
+```
+
+Configure:
+
+```
+config.h
+```
+
+Upload using Arduino IDE.
+
+### 3. Install Android App
+
+Build:
+
+```
+android/
+```
+
+or install the Release APK.
+
+### 4. Pair Devices
+
+Bluetooth device:
+
+```
+Pulsar-ESP
+```
+
+### 5. Exchange Contacts
+
+Exchange one-time handshake tokens:
+
+- QR code
+- Manual text
+
+### 6. Start Messaging
+
+Choose a contact, type your message and send.
+
+---
+
+## 📁 Repository Structure
+
+```text
 pulsar/
-├── android/         # Android client (Kotlin)
-├── esp32/           # ESP32 firmware (C++, Arduino)
-├── docs/            # Diagrams and schematics
+├── android/          # Android client (Kotlin)
+├── esp32/            # ESP32 firmware (Arduino/C++)
+├── docs/             # Schematics & diagrams
 ├── README.md
-└── LICENSE          # GPLv3
+└── LICENSE
 ```
 
 ---
 
-## Русский
+# 🇷🇺 Русский
 
-**Pulsar** обеспечивает сквозное шифрование текстовых сообщений, используя любой сервер Icecast/Shoutcast в качестве слепого ретранслятора. Сообщения шифруются AES-256-GCM, кодируются в Base64 и встраиваются в метаданные потока (поле `song`). Ни администратор сервера, ни перехватчик не могут прочитать переписку. Ввод возможен с физических кнопок Морзе на ESP32 (с дисплеем) или из терминала / экранных кнопок Android-клиента.
+## Описание
 
-### Возможности
-- Сквозное шифрование (AES-256-GCM) с уникальным ключом на каждый контакт.
-- Децентрализованная передача через любой публичный Icecast/Shoutcast-сервер.
-- Аппаратный терминал: ESP32 с кнопками Морзе и OLED-дисплеем для выбора контакта и отображения сообщений (поддерживается русский язык).
-- Android-терминал: интерфейс командной строки с дополнительными экранными кнопками Морзе.
-- Список контактов на ESP32, синхронизируемый с адресной книгой Android.
-- Безопасное добавление контактов: обмен одноразовым токеном при личной встрече (QR или ручной ввод).
-- Паранойя-режим: сервер видит только случайный Base64; каждое сообщение использует уникальный IV; аутентификация GCM исключает подмену.
-- Постоянный фоновый сервис на Android (уведомление foreground).
+**Pulsar** — это мессенджер со сквозным шифрованием, использующий любой публичный сервер **Icecast/Shoutcast** как слепой ретранслятор.
 
-### Принцип работы
+Сообщения шифруются алгоритмом **AES-256-GCM**, кодируются в Base64 и помещаются в метаданные потока (`song`).
+
+Администратор сервера и любой перехватчик видят только случайные данные и не могут прочитать переписку.
+
+Ввод возможен:
+
+- 📱 из Android CLI
+- ⌨️ экранными кнопками Морзе
+- 📟 аппаратной клавиатурой Морзе на ESP32
+
+---
+
+## ✨ Возможности
+
+- 🔐 Сквозное шифрование AES-256-GCM
+- 🔑 Отдельный ключ для каждого контакта
+- 🌐 Передача через любой публичный Icecast/Shoutcast
+- 📟 Аппаратный терминал ESP32
+- 📱 Android-клиент (CLI + кнопки Морзе)
+- 📚 Синхронизация списка контактов
+- 🤝 Добавление контактов через QR или одноразовый токен
+- 🛡️ Новый IV для каждого сообщения
+- ✅ Проверка целостности GCM
+- 🔔 Постоянный foreground-сервис Android
+
+---
+
+## 🏗 Схема работы
+
+```text
+ESP32
+  │
+Кнопки Морзе
+  ▼
+Декодирование
+  │
+Выбор контакта
+  │
+[contact_id:text]
+  │
+Bluetooth
+  ▼
+Android
+  │
+AES-256-GCM
+  │
+Base64
+  │
+HTTP обновление metadata
+  ▼
+Icecast/Shoutcast
+  │
+(song)
+  ▼
+Android
+  │
+Расшифровка
+  ▼
+ESP32
 ```
-ESP32: кнопки Морзе → декодирование → выбор контакта → [contact_id:text] → Bluetooth → Android
-Android: выбор контакта (или CLI) → шифрование → Base64 → HTTP-обновление метаданных → Icecast
-Приём: Android слушает свою точку монтирования → извлекает Base64 → расшифровывает известными ключами → отображает и отправляет на ESP32
+
+---
+
+## 🔒 Безопасность
+
+Для каждой пары пользователей создаётся собственный **256-битный PSK**, который передаётся только лично.
+
+Каждое сообщение использует:
+
+- случайный IV (96 бит)
+- AES-256-GCM
+- проверку аутентификационного тега
+
+Изменённые или поддельные сообщения автоматически отбрасываются.
+
+Ключи защищены средствами Android:
+
+- Android Keystore
+- EncryptedSharedPreferences
+
+---
+
+## 🚀 Быстрый старт
+
+### 1. Настройте Icecast
+
+Создайте точку монтирования:
+
+```
+/user123.mp3
 ```
 
-### Безопасность
-- Каждая пара использует уникальный 256-битный предварительно распределённый ключ (PSK), создаваемый локально и передаваемый только при личной встрече.
-- Каждое сообщение использует свежий случайный 96-битный IV (nonce).
-- Тег аутентификации GCM гарантирует целостность; изменённые или чужие сообщения игнорируются.
-- Ключи защищены Android Keystore + EncryptedSharedPreferences.
+Разрешите обновление metadata.
 
-### Быстрый старт
-1. Создайте точку монтирования на любом Icecast-сервере (например `/user123.mp3`), разрешите обновление метаданных.
-2. Загрузите прошивку ESP32 из `esp32/` (настройте пины в `config.h`, используйте Arduino IDE).
-3. Соберите и установите Android-приложение из `android/` (или готовый APK).
-4. Сопрягите Android с ESP32 через Bluetooth (имя устройства `Pulsar-ESP`).
-5. Добавьте контакты: обменяйтесь токенами лично (QR или текст).
-6. Начните общение: выберите контакт на ESP32 или в CLI, введите текст и отправьте.
+### 2. Прошейте ESP32
 
-### Структура репозитория
+Прошивка:
+
 ```
+esp32/
+```
+
+Настройте:
+
+```
+config.h
+```
+
+Загрузите через Arduino IDE.
+
+### 3. Установите Android
+
+Соберите приложение из:
+
+```
+android/
+```
+
+или установите готовый APK.
+
+### 4. Сопрягите устройства
+
+Bluetooth:
+
+```
+Pulsar-ESP
+```
+
+### 5. Добавьте контакты
+
+Обменяйтесь одноразовыми токенами:
+
+- QR-код
+- текстовый код
+
+### 6. Общайтесь
+
+Выберите контакт, введите сообщение и отправьте.
+
+---
+
+## 📁 Структура проекта
+
+```text
 pulsar/
-├── android/         # Android-клиент (Kotlin)
-├── esp32/           # Прошивка ESP32 (C++, Arduino)
-├── docs/            # Схемы и диаграммы
+├── android/          # Android-клиент (Kotlin)
+├── esp32/            # Прошивка ESP32 (Arduino/C++)
+├── docs/             # Схемы и диаграммы
 ├── README.md
-└── LICENSE          # GPLv3
+└── LICENSE
 ```
 
 ---
 
-## License / Лицензия
+# 📜 License / Лицензия
 
-This project is licensed under the **GNU General Public License v3.0** — see [LICENSE](LICENSE) for details.  
-Copyright (C) 2025 **SEVEN_INTHEMUTE**
-```
+Licensed under the **GNU General Public License v3.0 (GPL-3.0)**.
+
+See **LICENSE** for details.
+
+---
+
+<p align="center">
+
+Made with ❤️ for secure decentralized communication.
+
+**Copyright © 2026 SEVEN_INTHEMUTE**
+
+</p>
